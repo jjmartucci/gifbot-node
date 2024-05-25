@@ -1,6 +1,6 @@
 import Bolt from "@slack/bolt";
 import https from "https";
-import helloS3 from "./scripts/getAllGifs.js";
+import helloS3, { copyToS3 } from "./scripts/getAllGifs.js";
 
 const checkImageUrl = (imageUrl) => {
   // Determine if we should use http or https
@@ -39,6 +39,17 @@ const app = new Bolt.App({
 // General message handler to look for files
 app.message("", async ({ message, say }) => {
   console.log(`general message`, message);
+  if (message.subtype === "file_share") {
+    try {
+      // assumes only 1 file
+      await copyToS3(message.files[0].url_private_download);
+      await say(
+        `Your file should now be up at ${url_private_download.split("/").pop()}`
+      );
+    } catch (e) {
+      console.error(e);
+    }
+  }
 });
 
 // search for gifs
