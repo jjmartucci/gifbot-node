@@ -1,5 +1,6 @@
 const { App } = require("@slack/bolt");
 const https = require("https");
+const { default: helloS3 } = require("./scripts/getAllGifs.mjs");
 
 const checkImageUrl = (imageUrl) => {
   // Determine if we should use http or https
@@ -29,12 +30,23 @@ const app = new App({
   signingSecret: process.env.SLACK_SIGNING_SECRET,
 });
 
-app.message("hello", async ({ message, say }) => {
+/* app.message("hello", async ({ message, say }) => {
   console.log(`message got`, message);
   // say() sends a message to the channel where the event was triggered
   await say(`Hey there <@${message.user}>!`);
+}); */
+
+// search for gifs
+app.command("/search", async ({ command, ack, respond }) => {
+  // Acknowledge command request
+  await ack();
+  const gifs = helloS3();
+  console.log(helloS3);
+
+  await respond(`${command.text}`);
 });
 
+// handle someone asking for a .gif file
 app.message(".gif", async ({ message, say }) => {
   console.log(`gif message got`, message);
   const gif = message.text;
@@ -64,7 +76,7 @@ app.message(".gif", async ({ message, say }) => {
     .catch((error) => console.error(error));
 
   // say() sends a message to the channel where the event was triggered
-  await say(`here's yer gif <@${message.user}>!`);
+  //await say(`here's yer gif <@${message.user}>!`);
 });
 
 (async () => {
