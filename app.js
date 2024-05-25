@@ -37,11 +37,12 @@ const app = new Bolt.App({
 }); */
 
 // search for gifs
-app.command("/search", async ({ command, ack, respond }) => {
+app.command("/jiffy-search", async ({ command, ack, respond }) => {
   // Acknowledge command request
   await ack();
+  console.log(command);
   const gifs = helloS3();
-  console.log(helloS3);
+  console.log(gifs);
 
   await respond(`${command.text}`);
 });
