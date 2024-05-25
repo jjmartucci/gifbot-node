@@ -37,7 +37,7 @@ app.message("hello", async ({ message, say }) => {
 
 app.message(".gif", async ({ message, say }) => {
   console.log(`gif message got`, message);
-  const { gif } = message.text;
+  const gif = message.text;
   const GIF_DIR = `https://coffee-cake.nyc3.cdn.digitaloceanspaces.com/images/gifs/`;
   const image_url = `${GIF_DIR}${gif}`;
   checkImageUrl(image_url)
