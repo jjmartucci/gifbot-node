@@ -41,9 +41,11 @@ app.command("/jiffy-search", async ({ command, ack, respond }) => {
   // Acknowledge command request
   await ack();
   console.log(command);
-  const gifs = helloS3();
+  const gifs = await helloS3();
   const matchingGifs = gifs.filter((gif) => gif.name.includes(command.text));
   console.log(matchingGifs);
+  console.log(`Found ${matchingGifs.length} gifs`);
+
   await respond(`try ${matchingGifs.join(", ")}`);
 });
 

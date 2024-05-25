@@ -22,7 +22,7 @@ const helloS3 = async () => {
   try {
     let isTruncated = true;
 
-    console.log("Your bucket contains the following objects:\n");
+    console.log("Got bucket contents");
     let contents = [];
 
     while (isTruncated) {
@@ -36,6 +36,8 @@ const helloS3 = async () => {
       isTruncated = IsTruncated;
       command.input.ContinuationToken = NextContinuationToken;
     }
+    console.log(`Found ${contents.length} gifs`);
+
     return contents;
     //writeFileSync("./gifs.json", JSON.stringify(contents, null, 2), "utf8");
   } catch (err) {
