@@ -42,16 +42,24 @@ app.message(".gif", async ({ message, say }) => {
   const image_url = `${GIF_DIR}${gif}`;
   checkImageUrl(image_url)
     .then(async (result) => {
+      console.log(`image_url`, image_url);
       console.log("Is valid image URL:", result);
-      await say({
-        blocks: [
-          {
-            type: "image",
-            image_url: image_url,
-            alt_text: "A gif!",
-          },
-        ],
-      });
+      if (!result) {
+        await say({
+          text: `hmm, not a gif I know!`,
+        });
+      } else {
+        await say({
+          text: gif,
+          blocks: [
+            {
+              type: "image",
+              image_url: image_url,
+              alt_text: "A gif!",
+            },
+          ],
+        });
+      }
     })
     .catch((error) => console.error(error));
 
