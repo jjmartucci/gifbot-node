@@ -1,4 +1,11 @@
-import { ListObjectsV2Command, PutObjectCommand, S3 } from "@aws-sdk/client-s3";
+import {
+  ListObjectsV2Command,
+  PutObjectCommand,
+  S3,
+  S3Client,
+} from "@aws-sdk/client-s3";
+import { Upload } from "@aws-sdk/lib-storage";
+
 import axios from "axios";
 import { writeFileSync } from "fs";
 
@@ -21,15 +28,16 @@ export const copyToS3 = async (fileUrl) => {
   axios
     .get(fileUrl, { responseType: "stream" })
     .then(async (response) => {
-      const command = new PutObjectCommand({
-        Bucket: BUCKET,
-        Key: `${PREFIX}${fileUrl.split("/").pop()}`,
-        Body: response.data,
-      });
-
       try {
-        const response = await s3Client.send(command);
-        console.log(response);
+        const upload = new Upload({
+          client: S3Client,
+          params: {
+            Bucket: BUCKET,
+            Key: `${PREFIX}${fileUrl.split("/").pop()}`,
+            Body: response.data,
+          },
+        });
+        await parallelUploads3.done();
       } catch (err) {
         console.error(err);
       }
