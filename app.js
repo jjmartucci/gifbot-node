@@ -42,7 +42,7 @@ app.message("", async ({ message, say }) => {
   if (message.subtype === "file_share") {
     try {
       // assumes only 1 file
-      const slackURL = message.files[0].url_private_download;
+      const slackURL = message.files[0].url_private;
       console.log(slackURL);
       const key = await copyToS3(slackURL);
       await say(`Your file should now be up at ${key}`);
