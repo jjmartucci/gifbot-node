@@ -29,13 +29,15 @@ export const copyToS3 = async (fileUrl) => {
     .get(fileUrl, { responseType: "stream" })
     .then(async (response) => {
       try {
+        const uploadCommand = new PutObjectCommand({
+          Bucket: BUCKET,
+          Key: `${PREFIX}${fileUrl.split("/").pop()}`,
+          Body: response.data,
+        });
+
         const upload = new Upload({
           client: S3Client,
-          params: {
-            Bucket: BUCKET,
-            Key: `${PREFIX}${fileUrl.split("/").pop()}`,
-            Body: response.data,
-          },
+          params: uploadCommand,
         });
         const result = await upload.done();
         return result.Key;
