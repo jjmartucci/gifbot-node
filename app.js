@@ -36,6 +36,11 @@ const app = new Bolt.App({
   await say(`Hey there <@${message.user}>!`);
 }); */
 
+// General message handler to look for files
+app.message("", async ({ message, say }) => {
+  console.log(`general message`, message);
+});
+
 // search for gifs
 app.command("/jiffy-search", async ({ command, ack, respond }) => {
   // Acknowledge command request
