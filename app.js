@@ -12,7 +12,7 @@ app.message("hello", async ({ message, say }) => {
   await say(`Hey there <@${message.user}>!`);
 });
 
-app.message("/\b(.gif)/", async ({ message, say }) => {
+app.message(".gif", async ({ message, say }) => {
   console.log(`gif message got`, message);
   // say() sends a message to the channel where the event was triggered
   await say(`here's yer gif <@${message.user}>!`);
