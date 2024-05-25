@@ -36,8 +36,8 @@ const helloS3 = async () => {
       isTruncated = IsTruncated;
       command.input.ContinuationToken = NextContinuationToken;
     }
-    console.log(contents);
-    writeFileSync("./gifs.json", JSON.stringify(contents, null, 2), "utf8");
+    return contents;
+    //writeFileSync("./gifs.json", JSON.stringify(contents, null, 2), "utf8");
   } catch (err) {
     console.error(err);
   }
