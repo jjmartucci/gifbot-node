@@ -48,8 +48,9 @@ app.command("/jiffy-search", async ({ command, ack, respond }) => {
 
   if (matchingGifs.length === 0) {
     await respond(`nothing found for the search, try simplifying it`);
+  } else {
+    await respond(`try ${matchingGifs.map((gif) => gif.name).join(", ")}`);
   }
-  await respond(`try ${matchingGifs.map((gif) => gif.name).join(", ")}`);
 });
 
 // handle someone asking for a .gif file
