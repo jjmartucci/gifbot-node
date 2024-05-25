@@ -1,4 +1,5 @@
-import { ListObjectsV2Command, S3 } from "@aws-sdk/client-s3";
+import { ListObjectsV2Command, PutObjectCommand, S3 } from "@aws-sdk/client-s3";
+import axios from "axios";
 import { writeFileSync } from "fs";
 
 const CDN = `https://coffee-cake.nyc3.cdn.digitaloceanspaces.com/`;
@@ -15,12 +16,25 @@ const s3Client = new S3({
   },
 });
 
-export const copyToS3 = async (url) => {
-  await S3.copyObject({
-    Bucket: BUCKET,
-    CopySource: encodeURI(url),
-    Key: `${PREFIX}/${url.split("/").pop()}`,
-  });
+export const copyToS3 = async (fileUrl) => {
+  // Download file from web URL
+  axios
+    .get(fileUrl, { responseType: "stream" })
+    .then(async (response) => {
+      const command = new PutObjectCommand({
+        Bucket: BUCKET,
+        Key: `${PREFIX}${fileUrl.split("/").pop()}`,
+        Body: response.data,
+      });
+
+      try {
+        const response = await s3Client.send(command);
+        console.log(response);
+      } catch (err) {
+        console.error(err);
+      }
+    })
+    .catch((error) => console.error("Error copying file to S3:", error));
 };
 
 export const helloS3 = async () => {
