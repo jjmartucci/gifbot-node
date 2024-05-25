@@ -37,7 +37,8 @@ export const copyToS3 = async (fileUrl) => {
             Body: response.data,
           },
         });
-        await upload.done();
+        const result = await upload.done();
+        return result.Key;
       } catch (err) {
         console.error(err);
       }
