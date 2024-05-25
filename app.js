@@ -1,6 +1,6 @@
 const { App } = require("@slack/bolt");
 const https = require("https");
-const { default: helloS3 } = require("./scripts/getAllGifs.mjs");
+const { default: helloS3 } = require("./scripts/getAllGifs.js");
 
 const checkImageUrl = (imageUrl) => {
   // Determine if we should use http or https
