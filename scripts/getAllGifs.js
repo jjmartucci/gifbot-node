@@ -37,7 +37,7 @@ export const copyToS3 = async (fileUrl) => {
             Body: response.data,
           },
         });
-        await parallelUploads3.done();
+        await upload.done();
       } catch (err) {
         console.error(err);
       }

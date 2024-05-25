@@ -42,6 +42,7 @@ app.message("", async ({ message, say }) => {
   if (message.subtype === "file_share") {
     try {
       // assumes only 1 file
+      console.log(message.files[0].url_private_download);
       await copyToS3(message.files[0].url_private_download);
       await say(
         `Your file should now be up at ${url_private_download.split("/").pop()}`
