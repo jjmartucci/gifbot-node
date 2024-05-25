@@ -1,6 +1,6 @@
-const { App } = require("@slack/bolt");
-const https = require("https");
-const { default: helloS3 } = require("./scripts/getAllGifs.js");
+import Bolt from "@slack/bolt";
+import https from "https";
+import helloS3 from "./scripts/getAllGifs.js";
 
 const checkImageUrl = (imageUrl) => {
   // Determine if we should use http or https
@@ -25,7 +25,7 @@ const checkImageUrl = (imageUrl) => {
 };
 
 // Initializes your app with your bot token and signing secret
-const app = new App({
+const app = new Bolt.App({
   token: process.env.SLACK_BOT_TOKEN,
   signingSecret: process.env.SLACK_SIGNING_SECRET,
 });

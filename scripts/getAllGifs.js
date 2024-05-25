@@ -1,5 +1,5 @@
-const { ListObjectsV2Command, S3 } = require("@aws-sdk/client-s3");
-const { writeFileSync } = require("fs");
+import { ListObjectsV2Command, S3 } from "@aws-sdk/client-s3";
+import { writeFileSync } from "fs";
 
 const CDN = `https://coffee-cake.nyc3.cdn.digitaloceanspaces.com/`;
 
