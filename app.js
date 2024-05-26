@@ -39,7 +39,7 @@ const app = new Bolt.App({
 // General message handler to look for files
 app.message("", async ({ message, say }) => {
   console.log(`general message`, message);
-  if (message.subtype === "file_share") {
+  if (message.subtype === "file_share" && message.files[0].filetype === "gif") {
     try {
       // assumes only 1 file
       const slackURL = message.files[0].url_private;
