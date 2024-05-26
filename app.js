@@ -43,9 +43,8 @@ app.message("", async ({ message, say }) => {
     try {
       // assumes only 1 file
       const slackURL = message.files[0].url_private;
-      console.log(slackURL);
       const key = await copyToS3(slackURL);
-      await say(`Your file should now be up at ${key}`);
+      await say(`Your file should now be up at ${slackURL.split("/").pop()}`);
     } catch (e) {
       console.error(e);
     }
