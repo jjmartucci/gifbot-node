@@ -7,6 +7,7 @@ import { writeFileSync } from "fs";
 const CDN = `https://coffee-cake.nyc3.cdn.digitaloceanspaces.com/`;
 const BUCKET = "coffee-cake";
 const PREFIX = "images/gifs/";
+const SLACK_BOT_TOKEN = process.env.SLACK_OAUTH_U_TOKEN;
 
 const s3Client = new S3({
   forcePathStyle: false, // Configures to use subdomain/virtual calling format.
@@ -20,23 +21,31 @@ const s3Client = new S3({
 
 export const copyToS3 = async (fileUrl) => {
   // Download file from web URL
+  const config = {
+    decompress: false,
+    headers: {
+      Authorization: `Bearer ${SLACK_BOT_TOKEN}`,
+    },
+    responseType: "arraybuffer",
+  };
   axios
-    .get(fileUrl, { decompress: false, responseType: "arraybuffer" })
+    .get(fileUrl, config)
     .then(async (response) => {
       // Create a command to upload the file to S3
       const uploadCommand = new PutObjectCommand({
         Bucket: BUCKET,
         Key: `${PREFIX}${fileUrl.split("/").pop()}`,
-        Body: Buffer.from(response.data, "utf8"),
+        Body: response.data,
         ACL: "public-read",
         ContentType: "image/gif",
       });
 
       try {
         const response = await s3Client.send(uploadCommand);
-        console.log(response);
+        console.log(`S3 success:`, response);
+        return fileUrl.split("/").pop();
       } catch (err) {
-        console.error(err);
+        console.error(`S3 error:`, err);
       }
     })
     .catch((error) => console.error("Error copying file to S3:", error));
