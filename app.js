@@ -1,6 +1,7 @@
 import Bolt from "@slack/bolt";
 import https from "https";
 import helloS3, { copyToS3 } from "./scripts/getAllGifs.js";
+import { channel } from "diagnostics_channel";
 
 const checkImageUrl = (imageUrl) => {
   // Determine if we should use http or https
@@ -30,23 +31,25 @@ const app = new Bolt.App({
   signingSecret: process.env.SLACK_SIGNING_SECRET,
 });
 
-/* app.message("hello", async ({ message, say }) => {
-  console.log(`message got`, message);
-  // say() sends a message to the channel where the event was triggered
-  await say(`Hey there <@${message.user}>!`);
-}); */
-
-// General message handler to look for files
+/* General message handler to look for files, then check if it's a DM to Jiffy,
+ * and if, check if it is a gif, and if it is, upload it to S3.
+ */
 app.message("", async ({ message, say }) => {
-  console.log(`general message`, message);
-  if (message.subtype === "file_share" && message.files[0].filetype === "gif") {
-    try {
-      // assumes only 1 file
-      const slackURL = message.files[0].url_private;
-      const key = await copyToS3(slackURL);
-      await say(`Your file should now be up at ${slackURL.split("/").pop()}`);
-    } catch (e) {
-      console.error(e);
+  if (message.channel_type === "im" && messsage.channel === "D075T3EVB4G") {
+    console.log(`Jiffy DM:`, message);
+    if (message.subtype === "file_share") {
+      if (message.files[0].filetype !== "gif") {
+        await say(`DO NOT TRICK ME WITH YOUR NON GIF FILES!`);
+        return;
+      }
+      try {
+        // assumes only 1 file
+        const slackURL = message.files[0].url_private;
+        await copyToS3(slackURL);
+        await say(`Your file should now be up at ${slackURL.split("/").pop()}`);
+      } catch (e) {
+        console.error(e);
+      }
     }
   }
 });
