@@ -2,6 +2,7 @@ import Bolt from "@slack/bolt";
 import https from "https";
 import helloS3, { copyToS3 } from "./scripts/getAllGifs.js";
 import { channel } from "diagnostics_channel";
+import { findClosestMatch } from "./scripts/closeEnough.js";
 
 const checkImageUrl = (imageUrl) => {
   // Determine if we should use http or https
@@ -49,6 +50,7 @@ app.message("", async ({ message, say }) => {
         await say(`Your file should now be up at ${slackURL.split("/").pop()}`);
       } catch (e) {
         console.error(e);
+        await say(`tell Joe I threw this error and I'm sad now: ${e}`);
       }
     }
   }
@@ -75,35 +77,45 @@ app.command("/jiffy-search", async ({ command, ack, respond }) => {
 app.message(".gif", async ({ message, say }) => {
   console.log(`gif message got`, message);
   // ignore URLs to Gifs
-  if (message.text.includes("https://") || message.text.includes("http://")) {
-    return;
+  const ignoreText = ["`", "https://", "http://"];
+  const shouldIgnore = ignoreText.filter((text) => message.text.includes(text));
+  if (shouldIgnore.length > 0) {
+    return true;
   }
-  const gif = message.text;
+  const gifs = await helloS3();
+  const gif = message.text.split(".")[0];
+  const gifNames = gifs.map((gif) => gif.name);
   const GIF_DIR = `https://coffee-cake.nyc3.cdn.digitaloceanspaces.com/images/gifs/`;
-  const image_url = `${GIF_DIR}${gif}`;
-  checkImageUrl(image_url)
-    .then(async (result) => {
-      console.log(`image_url`, image_url);
-      console.log("Is valid image URL:", result);
-      if (!result) {
-        await say({
-          text: `hmm, not a gif I know!`,
-        });
-      } else {
-        await say({
-          text: gif,
-          blocks: [
-            {
-              type: "image",
-              image_url: image_url,
-              alt_text: "A gif!",
-            },
-          ],
-        });
-      }
-    })
-    .catch((error) => console.error(error));
 
+  // we've got an exact match
+  if (gifNames.includes(gif)) {
+    const image_url = `${GIF_DIR}${gif}`;
+    await say({
+      text: gif,
+      blocks: [
+        {
+          type: "image",
+          image_url: image_url,
+          alt_text: "A gif!",
+        },
+      ],
+    });
+  } else {
+    // yolo it
+    const closest = findClosestMatch(gif, gifNames);
+    console.log(`${closest} was the best match for ${gif}`);
+    const close_image_url = `${GIF_DIR}${closest}.gif`;
+    await say({
+      text: gif,
+      blocks: [
+        {
+          type: "image",
+          image_url: close_image_url,
+          alt_text: "A gif!",
+        },
+      ],
+    });
+  }
   // say() sends a message to the channel where the event was triggered
   //await say(`here's yer gif <@${message.user}>!`);
 });
