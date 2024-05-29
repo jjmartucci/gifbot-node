@@ -89,7 +89,7 @@ app.message(".gif", async ({ message, say }) => {
 
   // we've got an exact match
   if (gifNames.includes(gif)) {
-    const image_url = `${GIF_DIR}${gif}`;
+    const image_url = `${GIF_DIR}${gif}.gif`;
     await say({
       text: gif,
       blocks: [
