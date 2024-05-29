@@ -74,6 +74,10 @@ app.command("/jiffy-search", async ({ command, ack, respond }) => {
 // handle someone asking for a .gif file
 app.message(".gif", async ({ message, say }) => {
   console.log(`gif message got`, message);
+  // ignore URLs to Gifs
+  if (message.text.includes("https://") || message.text.includes("http://")) {
+    return;
+  }
   const gif = message.text;
   const GIF_DIR = `https://coffee-cake.nyc3.cdn.digitaloceanspaces.com/images/gifs/`;
   const image_url = `${GIF_DIR}${gif}`;
