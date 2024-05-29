@@ -35,7 +35,7 @@ const app = new Bolt.App({
  * and if, check if it is a gif, and if it is, upload it to S3.
  */
 app.message("", async ({ message, say }) => {
-  if (message.channel_type === "im" && message.channel === "D075T3EVB4G") {
+  if (message.channel_type === "im") {
     console.log(`Jiffy DM:`, message);
     if (message.subtype === "file_share") {
       if (message.files[0].filetype !== "gif") {
