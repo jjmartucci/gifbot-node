@@ -3,6 +3,7 @@ import https from "https";
 import helloS3, { copyToS3 } from "./scripts/getAllGifs.js";
 import { channel } from "diagnostics_channel";
 import { findClosestMatch } from "./scripts/closeEnough.js";
+import { getBestGif, searchTenor } from "./scripts/tenor.js";
 
 const checkImageUrl = (imageUrl) => {
   // Determine if we should use http or https
@@ -101,16 +102,16 @@ app.message(".gif", async ({ message, say }) => {
       ],
     });
   } else {
-    // yolo it
-    const closest = findClosestMatch(gif, gifNames);
-    console.log(`${closest} was the best match for ${gif}`);
-    const close_image_url = `${GIF_DIR}${closest}.gif`;
+    // fall back to Tenor search
+    const gifs = await searchTenor(gif);
+    const best = getBestGif(gifs.results);
+
     await say({
-      text: gif,
+      text: `${gif}, from tenor`,
       blocks: [
         {
           type: "image",
-          image_url: close_image_url,
+          image_url: best,
           alt_text: "A gif!",
         },
       ],
