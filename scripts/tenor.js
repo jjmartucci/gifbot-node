@@ -9,7 +9,7 @@ export const searchTenor = async (search_term) => {
   // using default locale of en_US
   var search_url =
     "https://tenor.googleapis.com/v2/search?q=" +
-    search_term +
+    search_term.replace("-", " ") +
     "&key=" +
     apikey +
     "&client_key=" +
