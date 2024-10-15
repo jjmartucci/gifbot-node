@@ -1,8 +1,6 @@
 import Bolt from "@slack/bolt";
 import https from "https";
 import helloS3, { copyToS3 } from "./scripts/getAllGifs.js";
-import { channel } from "diagnostics_channel";
-import { findClosestMatch } from "./scripts/closeEnough.js";
 import { getBestGif, searchTenor } from "./scripts/tenor.js";
 
 const checkImageUrl = (imageUrl) => {
@@ -86,7 +84,7 @@ app.message(".gif", async ({ message, say }) => {
   const gifs = await helloS3();
   const gif = message.text.split(".")[0];
   const gifNames = gifs.map((gif) => gif.name);
-  const GIF_DIR = `https://coffee-cake.nyc3.cdn.digitaloceanspaces.com/images/gifs/`;
+  const GIF_DIR = `${process.env.BUCKET_ENDPOINT}${process.env.BUCKET_PATH}`;
 
   // we've got an exact match
   if (gifNames.includes(gif)) {

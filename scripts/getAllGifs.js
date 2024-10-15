@@ -1,21 +1,18 @@
 import { ListObjectsV2Command, PutObjectCommand, S3 } from "@aws-sdk/client-s3";
-import { Upload } from "@aws-sdk/lib-storage";
-
 import axios from "axios";
-import { writeFileSync } from "fs";
 
-const CDN = `https://coffee-cake.nyc3.cdn.digitaloceanspaces.com/`;
-const BUCKET = "coffee-cake";
-const PREFIX = "images/gifs/";
+const CDN = process.env.BUCKET_ENDPOINT;
+const BUCKET = process.env.BUCKET_NAME;
+const PREFIX = process.env.BUCKET;
 const SLACK_BOT_TOKEN = process.env.SLACK_OAUTH_U_TOKEN;
 
 const s3Client = new S3({
   forcePathStyle: false, // Configures to use subdomain/virtual calling format.
-  endpoint: "https://nyc3.digitaloceanspaces.com",
-  region: "us-east-1",
+  endpoint: process.env.S3_ENDPOINT,
+  region: process.env.S3_REGION,
   credentials: {
-    accessKeyId: process.env.DO_BUCKET_KEY,
-    secretAccessKey: process.env.DO_SECRET_KEY,
+    accessKeyId: process.env.S3_BUCKET_KEY,
+    secretAccessKey: process.env.S3_SECRET_KEY,
   },
 });
 
@@ -53,8 +50,8 @@ export const copyToS3 = async (fileUrl) => {
 
 export const helloS3 = async () => {
   const command = new ListObjectsV2Command({
-    Bucket: "coffee-cake",
-    Prefix: "images/gifs/",
+    Bucket: process.env.BUCKET_NAME,
+    Prefix: process.env.BUCKET_PATH,
   });
 
   try {
