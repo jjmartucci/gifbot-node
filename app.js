@@ -95,14 +95,15 @@ app.message(".gif", async ({ message, say }) => {
     `https://jiffy.builtwith.coffee/api/search/yolo?q=${gif}`
   );
   const json = await jiffyRequest.json();
-  console.log(`Jiffy gave us ${JSON.stringify(json)}`);
+  const image_url = json.gif;
+  console.log(`Jiffy gave us ${image_url}`);
   if (json.gif !== "") {
     await say({
       text: gif,
       blocks: [
         {
           type: "image",
-          image_url: json.gif,
+          image_url: image_url,
           alt_text: "A gif!",
         },
       ],
