@@ -82,21 +82,54 @@ app.message(".gif", async ({ message, say }) => {
     return true;
   }
 
-  /* This is the old way
+  /** This is the old way */
   const gifs = await helloS3();
   const gif = message.text.split(".")[0];
   const gifNames = gifs.map((gif) => gif.name);
   const GIF_DIR = `${process.env.BUCKET_ENDPOINT}${process.env.BUCKET_PATH}`;
-  */
 
   /** NEW JIFFY WAY */
-  const gif = message.text.split(".")[0];
+  const jif = message.text.split(".")[0];
   const jiffyRequest = await fetch(
     `https://jiffy.builtwith.coffee/api/search/yolo?q=${gif}`
   );
   const json = await jiffyRequest.json();
-  const image_url = json.gif;
-  console.log(`Jiffy gave us ${image_url}`);
+  const jiffy_url = json.gif;
+  console.log(`Jiffy gave us ${jiffy_url}`);
+
+  /** S3 way */
+  if (gifNames.includes(gif)) {
+    const image_url = `${GIF_DIR}${gif}.gif`;
+    console.log(`S3 gave us ${image_url}`);
+
+    await say({
+      text: gif,
+      blocks: [
+        {
+          type: "image",
+          image_url: image_url,
+          alt_text: "A gif!",
+        },
+      ],
+    });
+  } else {
+    // fall back to Tenor search
+    const gifs = await searchTenor(gif);
+    const best = getBestGif(gifs.results);
+
+    await say({
+      text: `${gif}, from tenor`,
+      blocks: [
+        {
+          type: "image",
+          image_url: best,
+          alt_text: "A gif!",
+        },
+      ],
+    });
+  }
+
+  /** Jiffy way
   if (json.gif !== "") {
     await say({
       text: gif,
@@ -124,6 +157,7 @@ app.message(".gif", async ({ message, say }) => {
       ],
     });
   }
+     */
   // say() sends a message to the channel where the event was triggered
   //await say(`here's yer gif <@${message.user}>!`);
 });
