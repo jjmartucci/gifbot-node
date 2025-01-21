@@ -90,10 +90,12 @@ app.message(".gif", async ({ message, say }) => {
   */
 
   /** NEW JIFFY WAY */
+  const gif = message.text.split(".")[0];
   const jiffyRequest = await fetch(
     `https://jiffy.builtwith.coffee/search/yolo?q=${gif}`
   );
   const json = await jiffyRequest.json();
+  console.log(`Jiffy gave us ${json}`);
   if (json.gif !== "") {
     await say({
       text: gif,
