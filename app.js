@@ -95,7 +95,7 @@ app.message(".gif", async ({ message, say }) => {
     `https://jiffy.builtwith.coffee/api/search/yolo?q=${gif}`
   );
   const json = await jiffyRequest.json();
-  console.log(`Jiffy gave us ${json}`);
+  console.log(`Jiffy gave us ${JSON.stringify(json)}`);
   if (json.gif !== "") {
     await say({
       text: gif,
