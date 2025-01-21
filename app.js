@@ -81,20 +81,26 @@ app.message(".gif", async ({ message, say }) => {
   if (shouldIgnore.length > 0) {
     return true;
   }
+
+  /* This is the old way
   const gifs = await helloS3();
   const gif = message.text.split(".")[0];
   const gifNames = gifs.map((gif) => gif.name);
   const GIF_DIR = `${process.env.BUCKET_ENDPOINT}${process.env.BUCKET_PATH}`;
+  */
 
-  // we've got an exact match
-  if (gifNames.includes(gif)) {
-    const image_url = `${GIF_DIR}${gif}.gif`;
+  /** NEW JIFFY WAY */
+  const jiffyRequest = await fetch(
+    `https://jiffy.builtwith.coffee/search/yolo?q=${gif}`
+  );
+  const json = await jiffyRequest.json();
+  if (json.gif !== "") {
     await say({
       text: gif,
       blocks: [
         {
           type: "image",
-          image_url: image_url,
+          image_url: json.gif,
           alt_text: "A gif!",
         },
       ],
