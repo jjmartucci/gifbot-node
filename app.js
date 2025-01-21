@@ -97,7 +97,7 @@ app.message(".gif", async ({ message, say }) => {
   const jiffy_url = json.gif;
   console.log(`Jiffy gave us ${jiffy_url}`);
 
-  /** S3 way */
+  /** S3 way 
   if (gifNames.includes(gif)) {
     const image_url = `${GIF_DIR}${gif}.gif`;
     console.log(`S3 gave us ${image_url}`);
@@ -127,16 +127,16 @@ app.message(".gif", async ({ message, say }) => {
         },
       ],
     });
-  }
+  }*/
 
-  /** Jiffy way
-  if (json.gif !== "") {
+  /** Jiffy way */
+  if (jiffy_url !== "") {
     await say({
       text: gif,
       blocks: [
         {
           type: "image",
-          image_url: image_url,
+          image_url: jiffy_url,
           alt_text: "A gif!",
         },
       ],
@@ -157,7 +157,7 @@ app.message(".gif", async ({ message, say }) => {
       ],
     });
   }
-     */
+
   // say() sends a message to the channel where the event was triggered
   //await say(`here's yer gif <@${message.user}>!`);
 });
