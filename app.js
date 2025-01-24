@@ -128,7 +128,7 @@ app.message(".gif", async ({ message, say }) => {
       ],
     });
   }*/
-  const thread_ts = message.thread_ts || message.ts;
+  const thread_ts = message.thread_ts || undefined;
   /** Jiffy way */
   if (jiffy_url !== "") {
     await say({
