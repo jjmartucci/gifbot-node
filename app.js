@@ -128,11 +128,12 @@ app.message(".gif", async ({ message, say }) => {
       ],
     });
   }*/
-
+  const thread_ts = message.thread_ts || message.ts;
   /** Jiffy way */
   if (jiffy_url !== "") {
     await say({
       text: gif,
+      thread_ts,
       blocks: [
         {
           type: "image",
@@ -148,6 +149,7 @@ app.message(".gif", async ({ message, say }) => {
 
     await say({
       text: `${gif}, from tenor`,
+      thread_ts,
       blocks: [
         {
           type: "image",
