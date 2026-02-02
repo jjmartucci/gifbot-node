@@ -113,18 +113,17 @@ app.message(".gif", async ({ message, client }) => {
     return;
   }
 
-  // Extract just filenames, limit to 10 to stay under Slack's 2000 char limit
-  const filenames = gifs.slice(0, 10).map((g) => g.filename);
-  const gifUrl = getGifUrl(filenames[0]);
+  const totalResults = Math.min(gifs.length, 10); // Cap at 10 results
+  const gifUrl = getGifUrl(gifs[0].filename);
 
-  // Store context in action value for button handlers
+  // Store minimal context - we'll re-fetch results on "Try another"
   const actionContext = JSON.stringify({
-    channel: message.channel,
-    thread_ts,
-    user: message.user,
-    searchTerm,
-    filenames,
-    currentIndex: 0,
+    c: message.channel,       // channel
+    t: thread_ts,             // thread_ts
+    u: message.user,          // user
+    s: searchTerm,            // searchTerm
+    i: 0,                     // currentIndex
+    n: totalResults,          // total count
   });
 
   // Send ephemeral preview to user with confirmation buttons
@@ -143,7 +142,7 @@ app.message(".gif", async ({ message, client }) => {
         elements: [
           {
             type: "mrkdwn",
-            text: `Result 1 of ${filenames.length}`,
+            text: `Result 1 of ${totalResults}`,
           },
         ],
       },
@@ -160,7 +159,7 @@ app.message(".gif", async ({ message, client }) => {
             action_id: "gif_confirm",
             value: actionContext,
           },
-          ...(filenames.length > 1
+          ...(totalResults > 1
             ? [
                 {
                   type: "button",
@@ -192,19 +191,22 @@ app.message(".gif", async ({ message, client }) => {
 // Handle "Post it!" button click
 app.action("gif_confirm", async ({ ack, client, body, respond }) => {
   await ack();
-  const context = JSON.parse(body.actions[0].value);
-  const gifUrl = getGifUrl(context.filenames[context.currentIndex]);
+  const ctx = JSON.parse(body.actions[0].value);
+
+  // Re-fetch to get the filename for current index
+  const gifs = await searchJiffy(ctx.s);
+  const gifUrl = getGifUrl(gifs[ctx.i].filename);
 
   // Post the gif publicly
   await client.chat.postMessage({
-    channel: context.channel,
-    thread_ts: context.thread_ts,
-    text: context.searchTerm,
+    channel: ctx.c,
+    thread_ts: ctx.t,
+    text: ctx.s,
     blocks: [
       {
         type: "image",
         image_url: gifUrl,
-        alt_text: context.searchTerm,
+        alt_text: ctx.s,
       },
     ],
   });
@@ -212,13 +214,13 @@ app.action("gif_confirm", async ({ ack, client, body, respond }) => {
   // Replace the ephemeral message to show it was posted
   await respond({
     replace_original: true,
-    text: `Posted "${context.searchTerm}" gif!`,
+    text: `Posted "${ctx.s}" gif!`,
     blocks: [
       {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `Posted "${context.searchTerm}" gif!`,
+          text: `Posted "${ctx.s}" gif!`,
         },
       },
     ],
@@ -228,34 +230,37 @@ app.action("gif_confirm", async ({ ack, client, body, respond }) => {
 // Handle "Try another" button click
 app.action("gif_retry", async ({ ack, body, respond }) => {
   await ack();
-  const context = JSON.parse(body.actions[0].value);
+  const ctx = JSON.parse(body.actions[0].value);
 
   // Move to next gif, wrap around if at the end
-  const nextIndex = (context.currentIndex + 1) % context.filenames.length;
-  const newGifUrl = getGifUrl(context.filenames[nextIndex]);
+  const nextIndex = (ctx.i + 1) % ctx.n;
+
+  // Re-fetch to get the filename for next index
+  const gifs = await searchJiffy(ctx.s);
+  const newGifUrl = getGifUrl(gifs[nextIndex].filename);
 
   // Update context with new index
   const newContext = JSON.stringify({
-    ...context,
-    currentIndex: nextIndex,
+    ...ctx,
+    i: nextIndex,
   });
 
   // Replace the ephemeral message with new gif
   await respond({
     replace_original: true,
-    text: `Preview for "${context.searchTerm}"`,
+    text: `Preview for "${ctx.s}"`,
     blocks: [
       {
         type: "image",
         image_url: newGifUrl,
-        alt_text: context.searchTerm,
+        alt_text: ctx.s,
       },
       {
         type: "context",
         elements: [
           {
             type: "mrkdwn",
-            text: `Result ${nextIndex + 1} of ${context.filenames.length}`,
+            text: `Result ${nextIndex + 1} of ${ctx.n}`,
           },
         ],
       },
@@ -300,18 +305,18 @@ app.action("gif_retry", async ({ ack, body, respond }) => {
 // Handle "Cancel" button click
 app.action("gif_cancel", async ({ ack, body, respond }) => {
   await ack();
-  const context = JSON.parse(body.actions[0].value);
+  const ctx = JSON.parse(body.actions[0].value);
 
   // Replace the ephemeral message to show cancellation
   await respond({
     replace_original: true,
-    text: `Cancelled "${context.searchTerm}" gif`,
+    text: `Cancelled "${ctx.s}" gif`,
     blocks: [
       {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `Cancelled "${context.searchTerm}" gif`,
+          text: `Cancelled "${ctx.s}" gif`,
         },
       },
     ],
