@@ -72,8 +72,27 @@ app.command("/jiffy-search", async ({ command, ack, respond }) => {
   }
 });
 
+// Helper to fetch a gif URL from Jiffy or Tenor
+async function fetchGifUrl(searchTerm) {
+  const jiffyRequest = await fetch(
+    `https://jiffy.builtwith.coffee/api/search/yolo?q=${searchTerm}`
+  );
+  const json = await jiffyRequest.json();
+  const jiffy_url = json.gif;
+  console.log(`Jiffy gave us ${jiffy_url}`);
+
+  if (jiffy_url !== "") {
+    return { url: jiffy_url, source: "jiffy" };
+  } else {
+    // fall back to Tenor search
+    const gifs = await searchTenor(searchTerm);
+    const best = getBestGif(gifs.results);
+    return { url: best, source: "tenor" };
+  }
+}
+
 // handle someone asking for a .gif file
-app.message(".gif", async ({ message, say }) => {
+app.message(".gif", async ({ message, client }) => {
   console.log(`gif message got`, message);
   // ignore URLs to Gifs
   const ignoreText = ["`", "https://", "http://"];
@@ -82,86 +101,189 @@ app.message(".gif", async ({ message, say }) => {
     return true;
   }
 
-  /** This is the old way */
-  const gifs = await helloS3();
   const gif = message.text.split(".")[0];
-  const gifNames = gifs.map((gif) => gif.name);
-  const GIF_DIR = `${process.env.BUCKET_ENDPOINT}${process.env.BUCKET_PATH}`;
-
-  /** NEW JIFFY WAY */
-  const jif = message.text.split(".")[0];
-  const jiffyRequest = await fetch(
-    `https://jiffy.builtwith.coffee/api/search/yolo?q=${gif}`
-  );
-  const json = await jiffyRequest.json();
-  const jiffy_url = json.gif;
-  console.log(`Jiffy gave us ${jiffy_url}`);
-
-  /** S3 way 
-  if (gifNames.includes(gif)) {
-    const image_url = `${GIF_DIR}${gif}.gif`;
-    console.log(`S3 gave us ${image_url}`);
-
-    await say({
-      text: gif,
-      blocks: [
-        {
-          type: "image",
-          image_url: image_url,
-          alt_text: "A gif!",
-        },
-      ],
-    });
-  } else {
-    // fall back to Tenor search
-    const gifs = await searchTenor(gif);
-    const best = getBestGif(gifs.results);
-
-    await say({
-      text: `${gif}, from tenor`,
-      blocks: [
-        {
-          type: "image",
-          image_url: best,
-          alt_text: "A gif!",
-        },
-      ],
-    });
-  }*/
   const thread_ts = message.thread_ts || undefined;
-  /** Jiffy way */
-  if (jiffy_url !== "") {
-    await say({
-      text: gif,
-      thread_ts,
-      blocks: [
-        {
-          type: "image",
-          image_url: jiffy_url,
-          alt_text: "A gif!",
-        },
-      ],
-    });
-  } else {
-    // fall back to Tenor search
-    const gifs = await searchTenor(gif);
-    const best = getBestGif(gifs.results);
+  const { url: gifUrl, source } = await fetchGifUrl(gif);
 
-    await say({
-      text: `${gif}, from tenor`,
-      thread_ts,
-      blocks: [
-        {
-          type: "image",
-          image_url: best,
-          alt_text: "A gif!",
-        },
-      ],
-    });
-  }
+  // Store context in action value for button handlers
+  const actionContext = JSON.stringify({
+    channel: message.channel,
+    thread_ts,
+    user: message.user,
+    searchTerm: gif,
+    gifUrl,
+    source,
+  });
 
-  // say() sends a message to the channel where the event was triggered
-  //await say(`here's yer gif <@${message.user}>!`);
+  // Send ephemeral preview to user with confirmation buttons
+  await client.chat.postEphemeral({
+    channel: message.channel,
+    user: message.user,
+    text: `Preview for "${gif}"`,
+    blocks: [
+      {
+        type: "image",
+        image_url: gifUrl,
+        alt_text: gif,
+      },
+      {
+        type: "actions",
+        elements: [
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "Post it!",
+            },
+            style: "primary",
+            action_id: "gif_confirm",
+            value: actionContext,
+          },
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "Try another",
+            },
+            action_id: "gif_retry",
+            value: actionContext,
+          },
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "Cancel",
+            },
+            style: "danger",
+            action_id: "gif_cancel",
+            value: actionContext,
+          },
+        ],
+      },
+    ],
+  });
+});
+
+// Handle "Post it!" button click
+app.action("gif_confirm", async ({ ack, client, body }) => {
+  await ack();
+  const context = JSON.parse(body.actions[0].value);
+
+  // Post the gif publicly
+  await client.chat.postMessage({
+    channel: context.channel,
+    thread_ts: context.thread_ts,
+    text: context.searchTerm,
+    blocks: [
+      {
+        type: "image",
+        image_url: context.gifUrl,
+        alt_text: context.searchTerm,
+      },
+    ],
+  });
+
+  // Update the ephemeral message to show it was posted
+  await client.chat.update({
+    channel: body.channel.id,
+    ts: body.message.ts,
+    text: `Posted "${context.searchTerm}" gif!`,
+    blocks: [
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `Posted "${context.searchTerm}" gif!`,
+        },
+      },
+    ],
+  });
+});
+
+// Handle "Try another" button click
+app.action("gif_retry", async ({ ack, client, body }) => {
+  await ack();
+  const context = JSON.parse(body.actions[0].value);
+
+  // Fetch a new gif (the yolo endpoint should return a different one)
+  const { url: newGifUrl, source } = await fetchGifUrl(context.searchTerm);
+
+  // Update context with new gif
+  const newContext = JSON.stringify({
+    ...context,
+    gifUrl: newGifUrl,
+    source,
+  });
+
+  // Update the ephemeral message with new gif
+  await client.chat.update({
+    channel: body.channel.id,
+    ts: body.message.ts,
+    text: `Preview for "${context.searchTerm}"`,
+    blocks: [
+      {
+        type: "image",
+        image_url: newGifUrl,
+        alt_text: context.searchTerm,
+      },
+      {
+        type: "actions",
+        elements: [
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "Post it!",
+            },
+            style: "primary",
+            action_id: "gif_confirm",
+            value: newContext,
+          },
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "Try another",
+            },
+            action_id: "gif_retry",
+            value: newContext,
+          },
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "Cancel",
+            },
+            style: "danger",
+            action_id: "gif_cancel",
+            value: newContext,
+          },
+        ],
+      },
+    ],
+  });
+});
+
+// Handle "Cancel" button click
+app.action("gif_cancel", async ({ ack, client, body }) => {
+  await ack();
+  const context = JSON.parse(body.actions[0].value);
+
+  // Update the ephemeral message to show cancellation
+  await client.chat.update({
+    channel: body.channel.id,
+    ts: body.message.ts,
+    text: `Cancelled "${context.searchTerm}" gif`,
+    blocks: [
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `Cancelled "${context.searchTerm}" gif`,
+        },
+      },
+    ],
+  });
 });
 
 (async () => {
