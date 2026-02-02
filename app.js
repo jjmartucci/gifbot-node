@@ -165,7 +165,7 @@ app.message(".gif", async ({ message, client }) => {
 });
 
 // Handle "Post it!" button click
-app.action("gif_confirm", async ({ ack, client, body }) => {
+app.action("gif_confirm", async ({ ack, client, body, respond }) => {
   await ack();
   const context = JSON.parse(body.actions[0].value);
 
@@ -183,10 +183,9 @@ app.action("gif_confirm", async ({ ack, client, body }) => {
     ],
   });
 
-  // Update the ephemeral message to show it was posted
-  await client.chat.update({
-    channel: body.channel.id,
-    ts: body.message.ts,
+  // Replace the ephemeral message to show it was posted
+  await respond({
+    replace_original: true,
     text: `Posted "${context.searchTerm}" gif!`,
     blocks: [
       {
@@ -201,7 +200,7 @@ app.action("gif_confirm", async ({ ack, client, body }) => {
 });
 
 // Handle "Try another" button click
-app.action("gif_retry", async ({ ack, client, body }) => {
+app.action("gif_retry", async ({ ack, body, respond }) => {
   await ack();
   const context = JSON.parse(body.actions[0].value);
 
@@ -215,10 +214,9 @@ app.action("gif_retry", async ({ ack, client, body }) => {
     source,
   });
 
-  // Update the ephemeral message with new gif
-  await client.chat.update({
-    channel: body.channel.id,
-    ts: body.message.ts,
+  // Replace the ephemeral message with new gif
+  await respond({
+    replace_original: true,
     text: `Preview for "${context.searchTerm}"`,
     blocks: [
       {
@@ -265,14 +263,13 @@ app.action("gif_retry", async ({ ack, client, body }) => {
 });
 
 // Handle "Cancel" button click
-app.action("gif_cancel", async ({ ack, client, body }) => {
+app.action("gif_cancel", async ({ ack, body, respond }) => {
   await ack();
   const context = JSON.parse(body.actions[0].value);
 
-  // Update the ephemeral message to show cancellation
-  await client.chat.update({
-    channel: body.channel.id,
-    ts: body.message.ts,
+  // Replace the ephemeral message to show cancellation
+  await respond({
+    replace_original: true,
     text: `Cancelled "${context.searchTerm}" gif`,
     blocks: [
       {
