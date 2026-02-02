@@ -113,8 +113,8 @@ app.message(".gif", async ({ message, client }) => {
     return;
   }
 
-  // Extract just filenames to keep action value small (Slack has 2000 char limit)
-  const filenames = gifs.map((g) => g.filename);
+  // Extract just filenames, limit to 10 to stay under Slack's 2000 char limit
+  const filenames = gifs.slice(0, 10).map((g) => g.filename);
   const gifUrl = getGifUrl(filenames[0]);
 
   // Store context in action value for button handlers
