@@ -103,6 +103,7 @@ app.message(".gif", async ({ message, client }) => {
 
   // Search Jiffy for all matching gifs
   const gifs = await searchJiffy(searchTerm);
+  console.log(`Search for "${searchTerm}" returned ${gifs.length} results`);
 
   if (gifs.length === 0) {
     await client.chat.postEphemeral({
@@ -115,6 +116,7 @@ app.message(".gif", async ({ message, client }) => {
 
   const totalResults = Math.min(gifs.length, 10); // Cap at 10 results
   const gifUrl = getGifUrl(gifs[0].filename);
+  console.log(`First result URL: ${gifUrl}`);
 
   // Store minimal context - we'll re-fetch results on "Try another"
   const actionContext = JSON.stringify({
@@ -125,67 +127,74 @@ app.message(".gif", async ({ message, client }) => {
     i: 0,                     // currentIndex
     n: totalResults,          // total count
   });
+  console.log(`Action context (${actionContext.length} chars): ${actionContext}`);
 
   // Send ephemeral preview to user with confirmation buttons
-  await client.chat.postEphemeral({
-    channel: message.channel,
-    user: message.user,
-    text: `Preview for "${searchTerm}"`,
-    blocks: [
-      {
-        type: "image",
-        image_url: gifUrl,
-        alt_text: searchTerm,
-      },
-      {
-        type: "context",
-        elements: [
-          {
-            type: "mrkdwn",
-            text: `Result 1 of ${totalResults}`,
-          },
-        ],
-      },
-      {
-        type: "actions",
-        elements: [
-          {
-            type: "button",
-            text: {
-              type: "plain_text",
-              text: "Post it!",
+  try {
+    await client.chat.postEphemeral({
+      channel: message.channel,
+      user: message.user,
+      text: `Preview for "${searchTerm}"`,
+      blocks: [
+        {
+          type: "image",
+          image_url: gifUrl,
+          alt_text: searchTerm,
+        },
+        {
+          type: "context",
+          elements: [
+            {
+              type: "mrkdwn",
+              text: `Result 1 of ${totalResults}`,
             },
-            style: "primary",
-            action_id: "gif_confirm",
-            value: actionContext,
-          },
-          ...(totalResults > 1
-            ? [
-                {
-                  type: "button",
-                  text: {
-                    type: "plain_text",
-                    text: "Try another",
+          ],
+        },
+        {
+          type: "actions",
+          elements: [
+            {
+              type: "button",
+              text: {
+                type: "plain_text",
+                text: "Post it!",
+              },
+              style: "primary",
+              action_id: "gif_confirm",
+              value: actionContext,
+            },
+            ...(totalResults > 1
+              ? [
+                  {
+                    type: "button",
+                    text: {
+                      type: "plain_text",
+                      text: "Try another",
+                    },
+                    action_id: "gif_retry",
+                    value: actionContext,
                   },
-                  action_id: "gif_retry",
-                  value: actionContext,
-                },
-              ]
-            : []),
-          {
-            type: "button",
-            text: {
-              type: "plain_text",
-              text: "Cancel",
+                ]
+              : []),
+            {
+              type: "button",
+              text: {
+                type: "plain_text",
+                text: "Cancel",
+              },
+              style: "danger",
+              action_id: "gif_cancel",
+              value: actionContext,
             },
-            style: "danger",
-            action_id: "gif_cancel",
-            value: actionContext,
-          },
-        ],
-      },
-    ],
-  });
+          ],
+        },
+      ],
+    });
+  } catch (error) {
+    console.error(`Failed to post ephemeral for "${searchTerm}":`, error);
+    console.error(`GIF URL was: ${gifUrl}`);
+    console.error(`Action context was: ${actionContext}`);
+  }
 });
 
 // Handle "Post it!" button click
