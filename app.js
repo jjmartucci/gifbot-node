@@ -83,9 +83,9 @@ async function searchJiffy(searchTerm) {
   return json.gifs || [];
 }
 
-// Build the gif URL from the Jiffy gif object
-function getGifUrl(gif) {
-  return `${IMAGE_CDN}/${gif.filename}`;
+// Build the gif URL from a filename
+function getGifUrl(filename) {
+  return `${IMAGE_CDN}/${filename}`;
 }
 
 // handle someone asking for a .gif file
@@ -113,7 +113,9 @@ app.message(".gif", async ({ message, client }) => {
     return;
   }
 
-  const gifUrl = getGifUrl(gifs[0]);
+  // Extract just filenames to keep action value small (Slack has 2000 char limit)
+  const filenames = gifs.map((g) => g.filename);
+  const gifUrl = getGifUrl(filenames[0]);
 
   // Store context in action value for button handlers
   const actionContext = JSON.stringify({
@@ -121,7 +123,7 @@ app.message(".gif", async ({ message, client }) => {
     thread_ts,
     user: message.user,
     searchTerm,
-    gifs, // Store all results
+    filenames,
     currentIndex: 0,
   });
 
@@ -141,7 +143,7 @@ app.message(".gif", async ({ message, client }) => {
         elements: [
           {
             type: "mrkdwn",
-            text: `Result 1 of ${gifs.length}`,
+            text: `Result 1 of ${filenames.length}`,
           },
         ],
       },
@@ -158,7 +160,7 @@ app.message(".gif", async ({ message, client }) => {
             action_id: "gif_confirm",
             value: actionContext,
           },
-          ...(gifs.length > 1
+          ...(filenames.length > 1
             ? [
                 {
                   type: "button",
@@ -191,7 +193,7 @@ app.message(".gif", async ({ message, client }) => {
 app.action("gif_confirm", async ({ ack, client, body, respond }) => {
   await ack();
   const context = JSON.parse(body.actions[0].value);
-  const gifUrl = getGifUrl(context.gifs[context.currentIndex]);
+  const gifUrl = getGifUrl(context.filenames[context.currentIndex]);
 
   // Post the gif publicly
   await client.chat.postMessage({
@@ -229,8 +231,8 @@ app.action("gif_retry", async ({ ack, body, respond }) => {
   const context = JSON.parse(body.actions[0].value);
 
   // Move to next gif, wrap around if at the end
-  const nextIndex = (context.currentIndex + 1) % context.gifs.length;
-  const newGifUrl = getGifUrl(context.gifs[nextIndex]);
+  const nextIndex = (context.currentIndex + 1) % context.filenames.length;
+  const newGifUrl = getGifUrl(context.filenames[nextIndex]);
 
   // Update context with new index
   const newContext = JSON.stringify({
@@ -253,7 +255,7 @@ app.action("gif_retry", async ({ ack, body, respond }) => {
         elements: [
           {
             type: "mrkdwn",
-            text: `Result ${nextIndex + 1} of ${context.gifs.length}`,
+            text: `Result ${nextIndex + 1} of ${context.filenames.length}`,
           },
         ],
       },
