@@ -85,7 +85,7 @@ async function searchJiffy(searchTerm) {
 
 // Build the gif URL from a filename
 function getGifUrl(filename) {
-  return `${IMAGE_CDN}/${filename}`;
+  return `${IMAGE_CDN}/${encodeURIComponent(filename)}`;
 }
 
 // handle someone asking for a .gif file
