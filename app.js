@@ -204,14 +204,16 @@ app.action("gif_retry", async ({ ack, body, respond }) => {
   await ack();
   const context = JSON.parse(body.actions[0].value);
 
-  // Fetch a new gif (the yolo endpoint should return a different one)
-  const { url: newGifUrl, source } = await fetchGifUrl(context.searchTerm);
+  // Fetch from Tenor and pick a random result
+  const tenorResults = await searchTenor(context.searchTerm);
+  const randomIndex = Math.floor(Math.random() * tenorResults.results.length);
+  const newGifUrl = tenorResults.results[randomIndex]?.media_formats?.gif?.url;
 
   // Update context with new gif
   const newContext = JSON.stringify({
     ...context,
     gifUrl: newGifUrl,
-    source,
+    source: "tenor",
   });
 
   // Replace the ephemeral message with new gif
