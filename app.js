@@ -222,9 +222,12 @@ app.action("gif_confirm", async ({ ack, client, body, respond }) => {
     ],
   });
 
-  // Replace the ephemeral message to show it was posted
-  await respond({
-    replace_original: true,
+  // Remove the old ephemeral and post a new one in the correct thread
+  await respond({ delete_original: true });
+  await client.chat.postEphemeral({
+    channel: ctx.c,
+    thread_ts: ctx.t,
+    user: ctx.u,
     text: `Posted "${ctx.s}" gif!`,
     blocks: [
       {
@@ -239,7 +242,7 @@ app.action("gif_confirm", async ({ ack, client, body, respond }) => {
 });
 
 // Handle "Try another" button click
-app.action("gif_retry", async ({ ack, body, respond }) => {
+app.action("gif_retry", async ({ ack, client, body, respond }) => {
   await ack();
   const ctx = JSON.parse(body.actions[0].value);
 
@@ -256,9 +259,12 @@ app.action("gif_retry", async ({ ack, body, respond }) => {
     i: nextIndex,
   });
 
-  // Replace the ephemeral message with new gif
-  await respond({
-    replace_original: true,
+  // Remove the old ephemeral and post a new one in the correct thread
+  await respond({ delete_original: true });
+  await client.chat.postEphemeral({
+    channel: ctx.c,
+    thread_ts: ctx.t,
+    user: ctx.u,
     text: `Preview for "${ctx.s}"`,
     blocks: [
       {
@@ -314,13 +320,16 @@ app.action("gif_retry", async ({ ack, body, respond }) => {
 });
 
 // Handle "Cancel" button click
-app.action("gif_cancel", async ({ ack, body, respond }) => {
+app.action("gif_cancel", async ({ ack, client, body, respond }) => {
   await ack();
   const ctx = JSON.parse(body.actions[0].value);
 
-  // Replace the ephemeral message to show cancellation
-  await respond({
-    replace_original: true,
+  // Remove the old ephemeral and post a new one in the correct thread
+  await respond({ delete_original: true });
+  await client.chat.postEphemeral({
+    channel: ctx.c,
+    thread_ts: ctx.t,
+    user: ctx.u,
     text: `Cancelled "${ctx.s}" gif`,
     blocks: [
       {
