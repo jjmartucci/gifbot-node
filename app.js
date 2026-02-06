@@ -108,7 +108,6 @@ app.message(".gif", async ({ message, client }) => {
   if (gifs.length === 0) {
     await client.chat.postEphemeral({
       channel: message.channel,
-      thread_ts: thread_ts,
       user: message.user,
       text: `No gifs found for "${searchTerm}"`,
     });
@@ -134,7 +133,6 @@ app.message(".gif", async ({ message, client }) => {
   try {
     await client.chat.postEphemeral({
       channel: message.channel,
-      thread_ts: thread_ts,
       user: message.user,
       text: `Preview for "${searchTerm}"`,
       blocks: [
